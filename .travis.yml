@@ -1,0 +1,20 @@
+sudo: required
+services:
+  - docker
+before_install:
+  - docker build -t mfriedman/react-test -f ./client/Dockerfile.dev ./client
+script:
+  - docker run -e CI=true mfriedman/react-test npm test
+
+after_success:
+  - docker build -t mfriedman/multi-client ./client
+  - docker build -t mfriedman/multi-nginx ./nginx
+  - docker build -t mfriedman/multi-server ./server
+  - docker build -t mfriedman/multi-worker ./worker
+  # Log in to Docker
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Push images to Docker Hub
+  - docker push mfriedman/multi-client
+  - docker push mfriedman/multi-nginx
+  - docker push mfriedman/multi-server
+  - docker push mfriedman/multi-worker
